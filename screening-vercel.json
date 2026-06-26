@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/lasuasa-screening-mailer.html" }
+    { "source": "/(.*)", "destination": "/lasuasa-screening-mailer-1.html" }
   ]
 }
