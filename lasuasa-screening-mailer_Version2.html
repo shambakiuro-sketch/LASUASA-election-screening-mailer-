@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LASUASA IEC — Screening Schedule Mailer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #0D1117;
+    --paper:     #1a4d2e;   /* LASUASA green */
+    --accent:    #1a4d2e;   /* header matches green */
+    --gold:      #C9A84C;   /* LASUASA gold */
+    --muted:     #6B7280;
+    --border:    #DDD9D0;
+    --success:   #166534;
+    --success-bg:#DCFCE7;
+    --error:     #991B1B;
+    --error-bg:  #FEE2E2;
+    --warn:      #92400E;
+    --warn-bg:   #FEF3C7;
+    --radius:    6px;
+    --mono:      'DM Mono', monospace;
+    --sans:      'Space Grotesk', sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: #122f1c;
+    color: #fff;
+    padding: 28px 40px 24px;
+    border-bottom: 4px solid var(--gold);
+  }
+  header .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  header p {
+    margin-top: 6px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.65);
+  }
+
+  /* ── LAYOUT ── */
+  .shell {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* ── CONFIG BOX ── */
+  .config-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  }
+  .config-card h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .config-card h2::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  input, select, textarea {
+    font-family: var(--sans);
+    font-size: 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    background: #f9f9f9;
+    color: var(--ink);
+    transition: border-color .15s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* ── ASPIRANT TABLE ── */
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .table-header h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .btn-add {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity .15s;
+  }
+  .btn-add:hover { opacity: .85; }
+
+  .aspirants-table {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .tbl-head {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1.5fr 1.4fr 1.4fr 44px;
+    background: #122f1c;
+    color: rgba(255,255,255,0.8);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .aspirant-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1.5fr 1.4fr 1.4fr 44px;
+    gap: 10px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+  }
+  .aspirant-row:nth-child(even) { background: #FAFAF8; }
+  .aspirant-row input {
+    font-size: 13px;
+    padding: 7px 9px;
+    background: transparent;
+    border-color: transparent;
+    width: 100%;
+  }
+  .aspirant-row input:focus { background: #fff; border-color: var(--accent); }
+  .aspirant-row input[type="datetime-local"] { font-family: var(--mono); font-size: 12px; }
+
+  .row-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    display: inline-block;
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+  .row-status.sent { background: #22C55E; }
+  .row-status.error { background: #EF4444; }
+  .row-status.sending { background: var(--gold); }
+
+  .btn-del {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #CBD5E1;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px;
+    transition: color .15s;
+  }
+  .btn-del:hover { color: var(--error); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ── IMPORT ── */
+  .import-strip {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .import-strip span { font-size: 13px; color: var(--muted); }
+  .btn-ghost {
+    background: none;
+    border: 1.5px solid var(--border);
+    color: var(--ink);
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  #csv-input { display: none; }
+
+  /* ── SEND BAR ── */
+  .send-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--ink);
+    border-top: 3px solid var(--gold);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    z-index: 100;
+  }
+  .send-bar .count { color: rgba(255,255,255,0.6); font-size: 13px; }
+  .send-bar .count strong { color: #fff; }
+
+  .btn-send {
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    padding: 11px 28px;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-send:hover:not(:disabled) { opacity: .85; }
+  .btn-send:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ── LOG ── */
+  .log {
+    background: var(--ink);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 80px;
+    display: none;
+  }
+  .log.visible { display: block; }
+  .log-line { padding: 2px 0; }
+  .log-line.ok  { color: #4ADE80; }
+  .log-line.err { color: #F87171; }
+  .log-line.inf { color: #93C5FD; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    top: 20px; right: 20px;
+    padding: 12px 18px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity .25s, transform .25s;
+    pointer-events: none;
+    max-width: 320px;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.success { background: var(--success-bg); color: var(--success); border: 1px solid #BBF7D0; }
+  #toast.error   { background: var(--error-bg);   color: var(--error);   border: 1px solid #FECACA; }
+  #toast.warn    { background: var(--warn-bg);     color: var(--warn);    border: 1px solid #FDE68A; }
+
+  /* ── PROGRESS ── */
+  .progress-bar-wrap {
+    height: 3px;
+    background: rgba(255,255,255,.15);
+    border-radius: 2px;
+    flex: 1;
+    display: none;
+  }
+  .progress-bar-wrap.visible { display: block; }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 2px;
+    transition: width .3s;
+    width: 0%;
+  }
+
+  /* ── TEMPLATE PREVIEW ── */
+  .preview-toggle {
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: 8px;
+    display: inline-block;
+  }
+  .preview-box {
+    display: none;
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    background: #FAFAF8;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    font-family: var(--mono);
+    color: var(--ink);
+  }
+  .preview-box.visible { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Themis Vanguard · LASUASA IEC</div>
+  <h1>Screening Schedule Mailer</h1>
+  <p>Send personalised screening date &amp; time notifications to each aspirant</p>
+</header>
+
+<div class="shell">
+
+  <!-- CONFIG -->
+  <div class="config-card">
+    <h2>Brevo API Config</h2>
+    <div class="field-row">
+      <div class="field full">
+        <label>Brevo API Key</label>
+        <input type="password" id="api-key" placeholder="xkeysib-…" />
+      </div>
+      <div class="field full">
+        <label>Sender Name</label>
+        <input type="text" id="sender-name" value="LASUASA IEC — Themis Vanguard" />
+      </div>
+      <div class="field full">
+        <label>Sender Email</label>
+        <input type="email" id="sender-email" value="lasuasaiec@gmail.com" />
+      </div>
+    </div>
+  </div>
+
+  <!-- EMAIL TEMPLATE -->
+  <div class="config-card">
+    <h2>Email Template</h2>
+    <div class="field-row">
+      <div class="field full">
+        <label>Subject Line</label>
+        <input type="text" id="email-subject" value="LASUASA Screening Notice — Your Scheduled Date & Time" />
+      </div>
+      <div class="field full">
+        <label>Email Body — use <code style="font-size:11px;background:#eee;padding:1px 4px;border-radius:3px">{{name}}</code>, <code style="font-size:11px;background:#eee;padding:1px 4px;border-radius:3px">{{position}}</code>, <code style="font-size:11px;background:#eee;padding:1px 4px;border-radius:3px">{{date}}</code>, <code style="font-size:11px;background:#eee;padding:1px 4px;border-radius:3px">{{time}}</code>, <code style="font-size:11px;background:#eee;padding:1px 4px;border-radius:3px">{{venue}}</code></label>
+        <textarea id="email-body">Dear {{name}},
+
+We write to officially inform you that your screening for the position of {{position}} has been scheduled as follows:
+
+  📅  Date:    {{date}}
+  🕐  Time:    {{time}}
+  📍  Venue:   {{venue}}
+
+Please ensure you arrive at least 15 minutes before your scheduled time with all required documents. Failure to appear at the stated time may result in disqualification.
+
+For enquiries, contact the IEC at lasuasaiec@gmail.com.
+
+Regards,
+LASUASA Independent Electoral Committee (IEC)
+Themis Vanguard</textarea>
+        <span class="preview-toggle" onclick="togglePreview()">Preview sample email ▾</span>
+        <pre class="preview-box" id="preview-box"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- VENUE (global default) -->
+  <div class="config-card">
+    <h2>Default Venue</h2>
+    <div class="field-row">
+      <div class="field full">
+        <label>Venue / Location (used if not set per-row)</label>
+        <input type="text" id="default-venue" placeholder="e.g. Architecture Studio, LASU Epe Campus" />
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORT -->
+  <div class="import-strip">
+    <span>Add aspirants manually below, or import a CSV</span>
+    <button class="btn-ghost" id="import-btn">⬆ Import CSV</button>
+    <input type="file" id="csv-input" accept=".csv" />
+    <button class="btn-ghost" id="download-template-btn">⬇ Download CSV Template</button>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-header">
+    <h2>Aspirants (0)</h2>
+    <button class="btn-add" id="add-btn">＋ Add Aspirant</button>
+  </div>
+
+  <div class="aspirants-table">
+    <div class="tbl-head">
+      <span>Full Name</span>
+      <span>Email</span>
+      <span>Position</span>
+      <span>Date &amp; Time</span>
+      <span>Venue Override</span>
+      <span></span>
+    </div>
+    <div id="rows-container">
+      <div class="empty-state" id="empty-msg">No aspirants yet. Click <strong>+ Add Aspirant</strong> or import a CSV.</div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="log" id="log"></div>
+
+</div><!-- .shell -->
+
+<!-- SEND BAR -->
+<div class="send-bar">
+  <div class="count"><strong id="bar-count">0</strong> aspirant(s) loaded</div>
+  <div class="progress-bar-wrap" id="prog-wrap">
+    <div class="progress-bar-fill" id="prog-fill"></div>
+  </div>
+  <button class="btn-send" id="send-btn" onclick="sendAll()" disabled>
+    ✉ Send Schedule Emails
+  </button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // rows array holds all aspirant objects
+  const rows = [];
+  let sending = false;
+
+  // Attach event listeners safely after DOM is ready
+  (function attachListeners() {
+    // Use DOMContentLoaded to ensure elements exist
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+    function init() {
+      // Buttons and inputs
+      const addBtn = document.getElementById('add-btn');
+      const importBtn = document.getElementById('import-btn');
+      const csvInput = document.getElementById('csv-input');
+      const downloadBtn = document.getElementById('download-template-btn');
+
+      if (addBtn) {
+        addBtn.addEventListener('click', () => {
+          console.log('Add Aspirant button clicked');
+          addRow();
+        });
+      } else {
+        console.error('Add button not found (id=add-btn)');
+      }
+
+      if (importBtn && csvInput) {
+        importBtn.addEventListener('click', () => csvInput.click());
+        csvInput.addEventListener('change', (e) => importCSV(e.target));
+      } else {
+        console.error('Import controls not found (csv-input/import-btn)');
+      }
+
+      if (downloadBtn) downloadBtn.addEventListener('click', downloadTemplate);
+
+      // Make sure send button is enabled/disabled based on rows
+      updateBarCount();
+
+      console.log('Initialization complete');
+    }
+  })();
+
+  /* ── ROW MANAGEMENT ── */
+  function addRow(data = {}) {
+    // Generate a stable unique integer id
+    const id = Date.now() + Math.floor(Math.random() * 1000000);
+    const newRow = {
+      id,
+      name: data.name || '',
+      email: data.email || '',
+      position: data.position || '',
+      datetime: data.datetime || '',
+      venue: data.venue || ''
+    };
+    rows.push(newRow);
+    console.log('Row added', newRow);
+    renderRows();
+  }
+
+  function removeRow(id) {
+    const i = rows.findIndex(r => r.id === id);
+    if (i > -1) {
+      console.log('Removing row id=', id);
+      rows.splice(i, 1);
+      renderRows();
+    } else {
+      console.error('Attempted to remove non-existent row id=', id);
+    }
+  }
+
+  function updateRow(id, field, value) {
+    const r = rows.find(rr => rr.id === id);
+    if (r) {
+      if (field === 'email') value = String(value || '').trim();
+      r[field] = value;
+      // Debug log on updates (silence noisy logs if needed)
+      // console.log(`Updated row ${id} ${field}=${value}`);
+    } else {
+      console.error('updateRow: row not found id=', id);
+    }
+    updateBarCount();
+  }
+
+  function renderRows() {
+    const container = document.getElementById('rows-container');
+    const empty = document.getElementById('empty-msg');
+
+    if (!container) {
+      console.error('rows-container not found');
+      return;
+    }
+
+    if (rows.length === 0) {
+      container.innerHTML = '';
+      if (empty) container.appendChild(empty);
+      if (empty) empty.style.display = '';
+      updateBarCount();
+      return;
+    }
+
+    if (empty) empty.style.display = 'none';
+    container.innerHTML = '';
+
+    rows.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'aspirant-row';
+      row.id = 'row-' + r.id;
+
+      // Column 1: Name + status dot
+      const colName = document.createElement('div');
+      colName.style.display = 'flex';
+      colName.style.alignItems = 'center';
+      colName.style.gap = '6px';
+
+      const status = document.createElement('span');
+      status.className = 'row-status';
+      status.id = 'st-' + r.id;
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.placeholder = 'Full name';
+      nameInput.value = r.name || '';
+      nameInput.addEventListener('input', (e) => updateRow(r.id, 'name', e.target.value));
+
+      colName.appendChild(status);
+      colName.appendChild(nameInput);
+      row.appendChild(colName);
+
+      // Column 2: Email
+      const colEmail = document.createElement('div');
+      const emailInput = document.createElement('input');
+      emailInput.type = 'email';
+      emailInput.placeholder = 'email@…';
+      emailInput.value = r.email || '';
+      emailInput.addEventListener('input', (e) => updateRow(r.id, 'email', e.target.value));
+      colEmail.appendChild(emailInput);
+      row.appendChild(colEmail);
+
+      // Column 3: Position
+      const colPos = document.createElement('div');
+      const posInput = document.createElement('input');
+      posInput.type = 'text';
+      posInput.placeholder = 'Position';
+      posInput.value = r.position || '';
+      posInput.addEventListener('input', (e) => updateRow(r.id, 'position', e.target.value));
+      colPos.appendChild(posInput);
+      row.appendChild(colPos);
+
+      // Column 4: DateTime
+      const colDt = document.createElement('div');
+      const dtInput = document.createElement('input');
+      dtInput.type = 'datetime-local';
+      dtInput.value = r.datetime || '';
+      dtInput.addEventListener('input', (e) => updateRow(r.id, 'datetime', e.target.value));
+      colDt.appendChild(dtInput);
+      row.appendChild(colDt);
+
+      // Column 5: Venue override
+      const colVenue = document.createElement('div');
+      const venueInput = document.createElement('input');
+      venueInput.type = 'text';
+      venueInput.placeholder = '(use default)';
+      venueInput.value = r.venue || '';
+      venueInput.addEventListener('input', (e) => updateRow(r.id, 'venue', e.target.value));
+      colVenue.appendChild(venueInput);
+      row.appendChild(colVenue);
+
+      // Column 6: Action (delete)
+      const colAction = document.createElement('div');
+      colAction.style.textAlign = 'right';
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-del';
+      delBtn.title = 'Remove';
+      delBtn.innerHTML = '×';
+      delBtn.addEventListener('click', () => removeRow(r.id));
+      colAction.appendChild(delBtn);
+      row.appendChild(colAction);
+
+      container.appendChild(row);
+    });
+
+    updateBarCount();
+  }
+
+  function esc(s) { return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+  function updateBarCount() {
+    document.getElementById('bar-count').textContent = rows.length;
+    const header = document.querySelector('.table-header h2');
+    if (header) header.textContent = `Aspirants (${rows.length})`;
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) sendBtn.disabled = rows.length === 0 || sending;
+  }
+
+  /* ── CSV ── */
+  function importCSV(input) {
+    try {
+      const file = input.files ? input.files[0] : (input instanceof HTMLInputElement ? input.files[0] : null);
+      if (!file) {
+        console.error('importCSV: no file selected');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const raw = String(e.target.result || '');
+          // Normalize newlines
+          const text = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+          const lines = text.split('\n').filter(l => l.trim().length > 0);
+          let skipped = 0;
+          // Skip header if it looks like headers
+          const startIndex = (lines.length > 0 && /name|email/i.test(lines[0])) ? 1 : 0;
+          console.log(`Importing CSV lines=${lines.length}, startIndex=${startIndex}`);
+          for (let i = startIndex; i < lines.length; i++) {
+            const line = lines[i];
+            const cols = parseCSVLine(line);
+            // Accept rows with at least name & email
+            if (!cols || cols.length < 2) { skipped++; console.warn('CSV row skipped (less than 2 columns):', line); continue; }
+            addRow({
+              name:     (cols[0] || '').trim(),
+              email:    (cols[1] || '').trim(),
+              position: (cols[2] || '').trim(),
+              datetime: (cols[3] || '').trim(),
+              venue:    (cols[4] || '').trim(),
+            });
+          }
+          showToast(`Imported ${rows.length} aspirant(s)${skipped ? ` (${skipped} rows skipped)` : ''}`, 'success');
+          console.log('CSV import complete', { total: rows.length, skipped });
+        } catch (err) {
+          console.error('Error processing CSV in reader.onload:', err);
+          showToast('Failed to import CSV', 'error');
+        }
+      };
+      reader.onerror = (err) => {
+        console.error('FileReader error', err);
+        showToast('Failed to read CSV file', 'error');
+      };
+      reader.readAsText(file, 'UTF-8');
+      // reset input so same file can be imported again
+      if (input && input.files) input.value = '';
+    } catch (err) {
+      console.error('importCSV error', err);
+      showToast('Failed to import CSV', 'error');
+    }
+  }
+
+  function parseCSVLine(line) {
+    // Robust CSV line parser per RFC4180-ish small subset:
+    // - Supports quoted fields with commas inside
+    // - Supports escaped quotes as double quotes ("")
+    const result = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        // If next char is also quote, it's an escaped quote
+        if (inQuotes && line[i+1] === '"') {
+          cur += '"';
+          i++; // skip escaped quote
+          continue;
+        }
+        inQuotes = !inQuotes;
+        continue;
+      }
+      if (ch === ',' && !inQuotes) {
+        result.push(cur);
+        cur = '';
+        continue;
+      }
+      cur += ch;
+    }
+    result.push(cur);
+    // Trim surrounding whitespace from each cell, but preserve inner spaces
+    return result.map(s => s.replace(/\r$/, '').trim());
+  }
+
+  function downloadTemplate() {
+    const csv = `Name,Email,Position,DateTime (YYYY-MM-DDTHH:MM),Venue Override\n` +
+      `Babatunde Adeyemi,babatunde@example.com,President,2026-07-10T10:00,Architecture Studio Room 3\n` +
+      `Fatima Sule,fatima@example.com,Secretary-General,2026-07-10T11:00,`;
+    download('lasuasa_screening_schedule_template.csv', csv, 'text/csv');
+  }
+
+  function download(name, content, type) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([content], { type }));
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  /* ── EMAIL TEMPLATE / PREVIEW ── */
+  const LASU_LOGO    = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN0AAADkCAYAAAAcsSF/AAEAAElEQVR4nOy9d5xlx1nn/a2qk2/uOLEna0YaaZRGOUdbliUbB6KNvQYvYUm7wC77AuY1YRezwLu7wMKSWQwGbJOccLZkBStaWZqcZzpMd9[...]';
+  const LASUASA_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAtAAAAKwCAYAAACxo0jGAAEAAElEQVR4nOz9abMkyZUliJ17Vc3Mt7dHvNj3zIzcsQO1AKitq4Uz0xRyRErIT+RPIykUyvADPwyHHIrMNKuH3VVdqAIKayKB3JFbREbG8u[...]';
+
+  function buildEmail(r) {
+    const dt = r.datetime ? new Date(r.datetime) : null;
+    const dateStr = dt ? dt.toLocaleDateString('en-NG', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) : '(date not set)';
+    const timeStr = dt ? dt.toLocaleTimeString('en-NG', { hour:'2-digit', minute:'2-digit', hour12:true }) : '(time not set)';
+    const venue   = r.venue?.trim() || document.getElementById('default-venue').value.trim() || 'TBC';
+
+    const bodyText = document.getElementById('email-body').value
+      .replace(/\{\{name\}\}/g,     r.name     || '')
+      .replace(/\{\{position\}\}/g, r.position || '')
+      .replace(/\{\{date\}\}/g,     dateStr)
+      .replace(/\{\{time\}\}/g,     timeStr)
+      .replace(/\{\{venue\}\}/g,    venue);
+
+    const subject = document.getElementById('email-subject').value
+      .replace(/\{\{name\}\}/g,     r.name     || '')
+      .replace(/\{\{position\}\}/g, r.position || '');
+
+    const bodyHtml = bodyText
+      .split('\n')
+      .map(line => line.trim() === '' ? '<br/>' : `<p style="margin:0 0 8px 0;">${line}</p>`)
+      .join('');
+
+    const htmlContent = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:24px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1);max-width:600px;width:100%;">
+<tr><td style="background:#1a4d2e;padding:24px 32px;border-bottom:4px solid #C9A84C;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr>
+<td width="70" align="center"><img src="${LASU_LOGO}" alt="LASU" width="60" height="60" style="display:block;object-fit:contain;"/></td>
+<td align="center" style="padding:0 12px;">
+  <div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#C9A84C;font-weight:600;margin-bottom:4px;">Themis Vanguard &middot; LASUASA IEC</div>
+  <div style="font-size:18px;font-weight:700;color:#fff;line-height:1.2;">Screening Schedule Notice</div>
+</td>
+<td width="70" align="center"><img src="${LASUASA_LOGO}" alt="LASUASA" width="60" height="60" style="display:block;object-fit:contain;"/></td>
+</tr></table>
+</td></tr>
+<tr><td style="padding:28px 36px;color:#0c1320;font-size:14px;line-height:1.7;">${bodyHtml}</td></tr>
+<tr><td style="padding:0 36px 28px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;overflow:hidden;">
+<tr><td style="background:#1a4d2e;padding:10px 18px;"><span style="color:#C9A84C;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">Screening Details</span></td></tr>
+<tr><td style="padding:16px 18px;">
+<table cellpadding="6" cellspacing="0">
+<tr><td style="font-size:13px;color:#6b7280;font-weight:600;padding-right:16px;">&#128197; Date</td><td style="font-size:14px;color:#0c1320;font-weight:700;">${dateStr}</td></tr>
+<tr><td style="font-size:13px;color:#6b7280;font-weight:600;padding-right:16px;">&#128336; Time</td><td style="font-size:14px;color:#0c1320;font-weight:700;">${timeStr}</td></tr>
+<tr><td style="font-size:13px;color:#6b7280;font-weight:600;padding-right:16px;">&#128205; Venue</td><td style="font-size:14px;color:#0c1320;font-weight:700;">${venue}</td></tr>
+<tr><td style="font-size:13px;color:#6b7280;font-weight:600;padding-right:16px;">&#127919; Position</td><td style="font-size:14px;color:#0c1320;font-weight:700;">${r.position || ''}</td></tr>
+</table>
+</td></tr>
+</table>
+</td></tr>
+<tr><td style="background:#122f1c;padding:16px 32px;border-top:2px solid #C9A84C;text-align:center;">
+<p style="margin:0;font-size:11px;color:rgba(255,255,255,0.5);">
+<strong style="color:rgba(255,255,255,0.8);">LASUASA Independent Electoral Committee</strong><br/>
+Themis Vanguard &nbsp;&middot;&nbsp; lasuasaiec@gmail.com</p>
+</td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+    return { subject, body: bodyText, htmlContent };
+  }
+
+  function togglePreview() {
+    const box = document.getElementById('preview-box');
+    box.classList.toggle('visible');
+    if (box.classList.contains('visible')) {
+      const sample = {
+        name: 'Babatunde Adeyemi',
+        position: 'President',
+        datetime: '2026-07-10T10:00',
+        venue: 'Architecture Studio Room 3',
+      };
+      const { subject, body } = buildEmail(sample);
+      box.textContent = `Subject: ${subject}\n\n${body}`;
+    }
+  }
+
+  /* ── SEND ── */
+
+  function isValidEmail(email) {
+    if (!email) return false;
+    // Simple but practical validation (rejects obviously invalid emails)
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).trim());
+  }
+
+  async function sendAll() {
+    const apiKey = document.getElementById('api-key').value.trim();
+    if (!apiKey) { showToast('Enter your Brevo API key first.', 'error'); console.error('sendAll: missing API key'); return; }
+    if (rows.length === 0) { showToast('No aspirants to send to.', 'warn'); console.warn('sendAll: no rows'); return; }
+
+    sending = true;
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.textContent = '⏳ Sending…';
+    }
+
+    const log = document.getElementById('log');
+    if (log) { log.innerHTML = ''; log.classList.add('visible'); }
+    const progWrap = document.getElementById('prog-wrap');
+    const progFill = document.getElementById('prog-fill');
+    if (progWrap) progWrap.classList.add('visible');
+
+    let sent = 0, failed = 0;
+
+    console.log('Starting sendAll for', rows.length, 'rows');
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      setStatus(r.id, 'sending');
+      logLine(`[${i+1}/${rows.length}] Sending to ${r.name || '(no name)'} (${r.email || '(no email)'})…`, 'inf');
+      console.log(`Sending to row id=${r.id} email='${r.email}' name='${r.name}'`);
+
+      const email = (r.email || '').trim();
+      const name = (r.name || '').trim();
+
+      if (!email || !name) {
+        logLine(`  ✗ Skipped — missing name or email`, 'err');
+        console.error(`Skipping row ${r.id} — missing name or email`, r);
+        setStatus(r.id, 'error');
+        failed++;
+        continue;
+      }
+
+      if (!isValidEmail(email)) {
+        logLine(`  ✗ Skipped — invalid email format: ${email}`, 'err');
+        console.error(`Invalid email for row ${r.id}:`, email);
+        setStatus(r.id, 'error');
+        failed++;
+        continue;
+      }
+
+      const { subject, body, htmlContent } = buildEmail(r);
+
+      try {
+        const payload = {
+          sender: {
+            name:  document.getElementById('sender-name').value.trim(),
+            email: document.getElementById('sender-email').value.trim(),
+          },
+          to: [{ email: email, name: name }],
+          subject,
+          htmlContent,
+          textContent: body,
+        };
+
+        console.log('Brevo request payload for', email, payload);
+
+        const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': apiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          logLine(`  ✓ Sent to ${email}`, 'ok');
+          console.log('Sent', email);
+          setStatus(r.id, 'sent');
+          sent++;
+        } else {
+          const errBody = await res.json().catch(() => ({}));
+          const message = errBody.message || errBody?.errors?.[0]?.message || `HTTP ${res.status}`;
+          logLine(`  ✗ Failed: ${message}`, 'err');
+          console.error('Brevo send failed for', email, 'response:', errBody, 'status:', res.status);
+          setStatus(r.id, 'error');
+          failed++;
+        }
+      } catch(e) {
+        logLine(`  ✗ Error: ${e.message}`, 'err');
+        console.error('Network/send error for', r.email, e);
+        setStatus(r.id, 'error');
+        failed++;
+      }
+
+      if (progFill) progFill.style.width = `${Math.round(((i+1)/rows.length)*100)}%`;
+      await sleep(300); // gentle rate-limit buffer
+    }
+
+    logLine(`\nDone. ✓ ${sent} sent, ✗ ${failed} failed.`, sent === rows.length ? 'ok' : 'err');
+    showToast(`Done — ${sent} sent, ${failed} failed.`, failed === 0 ? 'success' : 'warn');
+
+    sending = false;
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = '✉ Send Schedule Emails';
+    }
+    console.log('sendAll complete', { sent, failed });
+  }
+
+  function setStatus(id, state) {
+    const dot = document.getElementById('st-' + id);
+    if (!dot) {
+      console.warn('setStatus: dot not found for id=', id);
+      return;
+    }
+    dot.className = 'row-status ' + (state === 'sending' ? 'sending' : state === 'sent' ? 'sent' : state === 'error' ? 'error' : '');
+  }
+
+  function logLine(msg, cls='inf') {
+    const log = document.getElementById('log');
+    const div = document.createElement('div');
+    div.className = 'log-line ' + cls;
+    div.textContent = msg;
+    if (log) {
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    } else {
+      console.log('logLine:', msg);
+    }
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  /* ── TOAST ── */
+  let toastTimer;
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.className = 'show ' + type;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = type; }, 3500);
+  }
+
+  // Expose functions used by inline attributes if any (keeps compatibility)
+  window.addRow = addRow;
+  window.importCSV = importCSV;
+  window.downloadTemplate = downloadTemplate;
+  window.togglePreview = togglePreview;
+  window.sendAll = sendAll;
+</script>
+</body>
+</html>
