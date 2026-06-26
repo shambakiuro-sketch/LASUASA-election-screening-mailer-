@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/lasuasa-screening-mailer.html" }
+  ]
+}
