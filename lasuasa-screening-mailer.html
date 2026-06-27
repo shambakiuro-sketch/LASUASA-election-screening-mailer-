@@ -763,15 +763,37 @@ function downloadTemplate() {
 }
 
 /* SCHEDULING */
+// Parse a 'YYYY-MM-DDTHH:MM' string as local Date (avoid timezone surprises)
+function parseLocalDateTime(s) {
+  if (!s) return null;
+  // If it already contains a timezone offset or seconds, let Date handle it
+  if (s.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
+    const parts = s.split('T');
+    const d = parts[0].split('-').map(Number);
+    const t = parts[1].split(':').map(Number);
+    return new Date(d[0], d[1] - 1, d[2], t[0], t[1], 0, 0);
+  }
+  const dt = new Date(s);
+  if (isNaN(dt.getTime())) return null;
+  return dt;
+}
+
 function generateSchedule() {
   if (!rows.length) { showToast('No aspirants to schedule', 'warn'); return; }
-  const start = document.getElementById('schedule-start').value;
-  if (!start) { showToast('Set start date & time', 'error'); return; }
+  const startRaw = document.getElementById('schedule-start').value;
+  if (!startRaw) { showToast('Set start date & time', 'error'); return; }
 
-  let cursor = new Date(start);
-  const duration = Math.max(1, parseInt(document.getElementById('slot-duration').value) || 15);
-  const breakMin = Math.max(0, parseInt(document.getElementById('slot-break').value) || 0);
-  const parallel = Math.max(1, parseInt(document.getElementById('parallel-slots').value) || 1);
+  const startDate = parseLocalDateTime(startRaw);
+  if (!startDate) { showToast('Invalid start date', 'error'); return; }
+
+  const endRaw = document.getElementById('schedule-end').value;
+  const endDate = endRaw ? parseLocalDateTime(endRaw) : null;
+  if (endDate && endDate <= startDate) { showToast('End must be after start', 'error'); return; }
+
+  let cursor = new Date(startDate.getTime());
+  const duration = Math.max(1, parseInt(document.getElementById('slot-duration').value, 10) || 15);
+  const breakMin = Math.max(0, parseInt(document.getElementById('slot-break').value, 10) || 0);
+  const parallel = Math.max(1, parseInt(document.getElementById('parallel-slots').value, 10) || 1);
   const groupBy = document.getElementById('group-by').value;
 
   let list = rows.slice();
@@ -781,11 +803,31 @@ function generateSchedule() {
     list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 
+  // Estimate available slots if endDate provided
+  if (endDate) {
+    const totalMinutes = Math.floor((endDate - startDate) / (60 * 1000));
+    const slotBlock = duration + breakMin;
+    const maxSlots = Math.floor(totalMinutes / slotBlock) * parallel + (Math.floor(totalMinutes / slotBlock) > 0 ? 0 : 0);
+    if (maxSlots < list.length) {
+      // Not enough slots — warn but still fill until end
+      showToast('Warning: Not enough time in range for all aspirants — remaining will be left unassigned', 'warn');
+    }
+  }
+
   let idx = 0;
   while (idx < list.length) {
+    // If endDate is set and cursor already beyond end, break
+    if (endDate && cursor >= endDate) break;
+
+    // Assign up to `parallel` aspirants the same time slot
     for (let p = 0; p < parallel && idx < list.length; p++, idx++) {
+      // If endDate is set and cursor beyond end, stop assigning
+      if (endDate && cursor >= endDate) { idx = list.length; break; }
+      // Assign local datetime string without seconds
       list[idx].datetime = toDateTimeLocal(cursor);
     }
+
+    // advance cursor
     cursor = new Date(cursor.getTime() + (duration + breakMin) * 60 * 1000);
   }
 
@@ -801,11 +843,11 @@ function toDateTimeLocal(d) {
 
 /* EMAIL BUILDING */
 // LASUASA Logos as base64 data URIs (embedded)
-const LASU_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAA40lEQVR42u3WMQvCMBiG4ZqNLm4OighuDm51cXJ0cbCjm6OTg6uLi6ODS0tBBheFRtpa+n7w/nAPx+9HeG5vdzc7Ozs7OzuI+/3+fr/f7/f7/X6/3+/3+/1+v9/v9/v9fr/f7/f7/X6/3+/3+/1+vx/Hp2VZt/v9fkynUylJkuu6lkajIXVdR4QQQgghhBBCvkSn0yGfz+dRrVZlMBhIpVKRfr/PYM1mU+r1+oN1sMY+n48Jy7IMVqvVJIoiBGulUhGn06lJ13X5+/uT7XarXq8n9/td/H5fEcJQqVQkSRKZ1+s1k52/qVQqJRqNRi6Xi9zv96cGOLmFsI5+v/9fPyQkwsrJZjPZ7/fy/f2Nn7x+v99/2N8/9C8Rf3cUKt0AAAAASUVORK5CYII=';
-const LASUASA_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAA40lEQVR42u3WMQvCMBiG4ZqNLm4OighuDm51cXJ0cbCjm6OTg6uLi6ODS0tBBheFRtpa+n7w/nAPx+9HeG5vdzc7Ozs7OzuI+/3+fr/f7/f7/X6/3+/3+/1+v9/v9/v9fr/f7/f7/X6/3+/3+/1+vx/Hp2VZt/v9fkynUylJkuu6lkajIXVdR4QQQgghhBBCvkSn0yGfz+dRrVZlMBhIpVKRfr/PYM1mU+r1+oN1sMY+n48Jy7IMVqvVJIoiBGulUhGn06lJ13X5+/uT7XarXq8n9/td/H5fEcJQqVQkSRKZ1+s1k52/qVQqJRqNRi6Xi9zv96cGOLmFsI5+v/9fPyQkwsrJZjPZ7/fy/f2Nn7x+v99/2N8/9C8Rf3cUKt0AAAAASUVORK5CYII=';
+const LASU_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAA40lEQVR42u3WMQvCMBiG4ZqNLm4OighuDm51cXJ0cbCjm6OTg6uLi6ODS0tBBheFRtpa+n7w/nAPx+9HeG5vdzc7Ozs7OzuI+/3+fr/f7/[...]';
+const LASUASA_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAA40lEQVR42u3WMQvCMBiG4ZqNLm4OighuDm51cXJ0cbCjm6OTg6uLi6ODS0tBBheFRtpa+n7w/nAPx+9HeG5vdzc7Ozs7OzuI+/3+fr/[...]';
 
 function buildEmail(r) {
-  const dt = r.datetime ? new Date(r.datetime) : null;
+  const dt = r.datetime ? parseLocalDateTime(r.datetime) : null;
   const dateStr = dt ? dt.toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '(date not set)';
   const timeStr = dt ? dt.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', hour12: true }) : '(time not set)';
   const venue = r.venue?.trim() || document.getElementById('default-venue')?.value?.trim() || 'TBC';
@@ -836,7 +878,7 @@ function buildEmail(r) {
 <tr><td style="background:#1a4d2e;padding:24px 32px;border-bottom:4px solid #C9A84C;">
 <table width="100%" cellpadding="0" cellspacing="0"><tr>
 <td width="70" align="center"><img src="${LASU_LOGO}" alt="LASU" width="60" height="60" style="display:block;"/></td>
-<td align="center" style="padding:0 12px;"><div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#C9A84C;font-weight:600;margin-bottom:4px;">Themis Vanguard · LASUASA IEC</div><div style="font-size:18px;font-weight:700;color:#fff;">Screening Schedule Notice</div></td>
+<td align="center" style="padding:0 12px;"><div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#C9A84C;font-weight:600;margin-bottom:4px;">Themis Vanguard · LASUASA IEC</div></td>
 <td width="70" align="center"><img src="${LASUASA_LOGO}" alt="LASUASA" width="60" height="60" style="display:block;"/></td>
 </tr></table>
 </td></tr>
